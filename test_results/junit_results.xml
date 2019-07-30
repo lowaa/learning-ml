@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?><testsuite errors="0" failures="1" name="pytest" skipped="0" tests="5" time="0.158"><testcase classname="src.neural_network_test.NeuralNetworkTestCase" file="src/neural_network_test.py" line="29" name="test_matrix_mult" time="0.001"></testcase><testcase classname="src.neural_network_test.NeuralNetworkTestCase" file="src/neural_network_test.py" line="20" name="test_more_complicated_layer_z" time="0.000"></testcase><testcase classname="src.neural_network_test.NeuralNetworkTestCase" file="src/neural_network_test.py" line="12" name="test_simple_layer_z" time="0.000"></testcase><testcase classname="src.neural_network_test.NeuralNetworkTestCase" file="src/neural_network_test.py" line="52" name="test_training_hidden_layer" time="0.001"><failure message="ValueError: shapes (2,1) and (2,2) not aligned: 1 (dim 1) != 2 (dim 0)">self = &lt;neural_network_test.NeuralNetworkTestCase testMethod=test_training_hidden_layer&gt;
+
+    def test_training_hidden_layer(self):
+        # Very simple single epoch training
+    
+        subject = NeuralNetwork(num_inputs=1, num_outputs=2, learning_rate=0.05,
+                                hidden_layer_sizes=[2])
+        # Force our weights to be a certain thing...
+        subject.layers[0].weights = np.array([[0.25, 0.4]])
+        subject.layers[0].biases = np.array([[1, 0.7]])
+    
+        features = np.array([[1], [0.1]])
+        labels = np.array([[0.6, 0.3]])
+    
+&gt;       train_result: TrainResult = subject.train(features=features, labels=labels, epochs=1)
+
+src/neural_network_test.py:65: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/neural_network.py:159: in train
+    d_cost_d_w = np.dot(chain, d_cost_d_activation)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+args = (array([[0.05274318],
+       [0.00768936]]), array([[0.38942967, 0.98942967],
+       [0.48060542, 1.08060542]]))
+kwargs = {}
+relevant_args = (array([[0.05274318],
+       [0.00768936]]), array([[0.38942967, 0.98942967],
+       [0.48060542, 1.08060542]]), None)
+
+&gt;   ???
+E   ValueError: shapes (2,1) and (2,2) not aligned: 1 (dim 1) != 2 (dim 0)
+
+&lt;__array_function__ internals&gt;:6: ValueError</failure></testcase><testcase classname="src.neural_network_test.NeuralNetworkTestCase" file="src/neural_network_test.py" line="34" name="test_training_single_layer" time="0.001"></testcase></testsuite>
