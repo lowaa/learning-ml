@@ -80,22 +80,14 @@ class NeuralNetworkTestCase(unittest.TestCase):
         subject = NeuralNetwork(num_inputs=2, num_outputs=2, learning_rate=0.05,
                                 hidden_layer_sizes=[3])
         # Force our weights to be a certain thing...
-        # subject.layers[0].weights = np.array([[0.25], [0.4]])
-        # subject.layers[0].biases = np.array([[1], [0.7]])
+        subject.layers[0].weights = np.array([[0.25, 0.4], [0.25, 0.4], [0.25, 0.4]])
+        subject.layers[0].biases = np.array([[1], [0.7], [0.6]])
+        subject.layers[1].weights = np.array([[0.25, 0.4, 0.25], [0.4, 0.25, 0.4]])
+        subject.layers[1].biases = np.array([[1], [0.7]])
 
         features = np.array([[0.8, 0.1]])
         labels = np.array([[0.6, 0.3]])
 
         train_result: TrainResult = subject.train(features=features, labels=labels, epochs=1)
 
-        # d_cost_d_w = d_z_d_w * d_prev_a_d_z * d_z_d_prev_a * d_act_d_z * d_cost_d_act
-
-        # Back prop...
-        # hidden layer
-        # x0_act
-        # 1x1      1x2
-        #          1x2
-        # assert_that(train_result.error[0], close_to(0.18414719, 0.0000001))
-        #
-        # assert_that(subject.layers[0].weights[0][0], close_to(0.246037333, 0.00001))
-        # assert_that(subject.layers[0].weights[0][1], close_to(0.399603733, 0.00001))
+        # TODO: hand-calc result for assertion
