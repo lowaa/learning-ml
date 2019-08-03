@@ -6,7 +6,8 @@ np.random.seed(123)
 
 
 def log(msg):
-    print(msg)
+    pass
+    #print(msg)
 
 
 def calc_layer_z(weight: np.array,
@@ -144,25 +145,8 @@ class NeuralNetwork(object):
         error = None
 
         for i in range(0, epochs):
-            # Make sure to clear this before each epoch
-            layer_activation = []
-
-            # Initialise activation for forward propagation...
-            log('------------------- Begin forward prop')
-            current_layer_activation = features.T
-            # Begin forward propagation...
-            for idx, layer in enumerate(self.layers):
-                log('calc layer z (layer {}):\nw={}\na={}\nb={}'.format(idx, layer.weights, current_layer_activation,
-                                                                        layer.biases))
-                current_layer_z = np.dot(layer.weights, current_layer_activation) + layer.biases
-                layer_z.append(current_layer_z)
-                current_layer_activation = self._activation_fn(current_layer_z)
-                layer_activation.append(current_layer_activation)
-
-                # Transpose in preparation for the next time around...
-                # current_layer_activation = current_layer_activation
-
-            log('activations {}'.format(layer_activation))
+            # # Make sure to clear this before each epoch
+            layer_activation, layer_z = self._forward_prop(features=features)
 
             # Forward propagation done, calc error
             # All the errors for all of the input feature sets...
@@ -235,7 +219,35 @@ class NeuralNetwork(object):
         )
 
     def evaluate(self, features: np.array, labels: np.array):
-        pass
+        layer_activation, layer_z = self._forward_prop(features=features)
+        error = (layer_activation[-1] - labels.T) ** 2
+        return error
 
-    def predict(self, features: np.array, labels: np.array):
-        pass
+    def predict(self, features: np.array):
+        layer_activation, _ = self._forward_prop(features=features)
+        # Just return the last layer's activation, i.e. the output
+        return layer_activation[-1]
+
+    def _forward_prop(self, features: np.array):
+        # Make sure to clear this before each epoch
+        layer_activation = []
+        layer_z = []
+
+        # Initialise activation for forward propagation...
+        log('------------------- Begin forward prop')
+        current_layer_activation = features.T
+        # Begin forward propagation...
+        for idx, layer in enumerate(self.layers):
+            log('calc layer z (layer {}):\nw={}\na={}\nb={}'.format(idx, layer.weights, current_layer_activation,
+                                                                    layer.biases))
+            current_layer_z = np.dot(layer.weights, current_layer_activation) + layer.biases
+            layer_z.append(current_layer_z)
+            current_layer_activation = self._activation_fn(current_layer_z)
+            layer_activation.append(current_layer_activation)
+
+            # Transpose in preparation for the next time around...
+            # current_layer_activation = current_layer_activation
+
+        log('activations {}'.format(layer_activation))
+
+        return layer_activation, layer_z
