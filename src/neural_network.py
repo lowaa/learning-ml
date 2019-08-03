@@ -5,6 +5,10 @@ import numpy as np
 np.random.seed(123)
 
 
+def log(msg):
+    print(msg)
+
+
 def calc_layer_z(weight: np.array,
                  previous_activation: np.array,
                  bias: np.array) -> np.array:
@@ -27,8 +31,8 @@ TrainResult = NamedTuple('TrainResult', [
 
 
 class Layer(object):
-    weights: np.array
-    biases: np.array
+    _weights: np.array
+    _biases: np.array
 
     def __init__(self, num_layer_inputs, num_layer_outputs):
         if num_layer_inputs < 1:
@@ -41,14 +45,38 @@ class Layer(object):
         # Each weight matrix will be the ...
         # number of neurons in the previous layer : width
         # number of neurons in the current layer : height
-        self.weights = np.random.rand(num_layer_outputs, num_layer_inputs)
+        self._weights = np.random.rand(num_layer_outputs, num_layer_inputs)
 
         # The bias for each layer.
         # The last index is for output layer. Work backwards from that.
         # For each matrix...
         # Width = 1
         # Height = number of neurons in the current layer
-        self.biases = np.random.rand(num_layer_outputs, 1)
+        self._biases = np.random.rand(num_layer_outputs, 1)
+
+    @property
+    def weights(self) -> np.array:
+        return self._weights
+
+    @weights.setter
+    def weights(self, value: np.array):
+        if value.shape != self._weights.shape:
+            raise ValueError('weights shapes do not match. old: {}, new: {}'.format(
+                self._weights.shape, value.shape
+            ))
+        self._weights = value
+
+    @property
+    def biases(self) -> np.array:
+        return self._biases
+
+    @biases.setter
+    def biases(self, value: np.array):
+        if value.shape != self._biases.shape:
+            raise ValueError('biases shapes do not match. old: {}, new: {}'.format(
+                self._biases.shape, value.shape
+            ))
+        self._biases = value
 
 
 class NeuralNetwork(object):
@@ -116,11 +144,14 @@ class NeuralNetwork(object):
         error = None
 
         for i in range(0, epochs):
+            # Make sure to clear this before each epoch
+            layer_activation = []
 
             # Initialise activation for forward propagation...
             current_layer_activation = features
             # Begin forward propagation...
-            for layer in self.layers:
+            for idx, layer in enumerate(self.layers):
+                log('calc layer z (layer {}):\nw={}\na={}\nb={}'.format(idx, layer.weights, current_layer_activation, layer.biases))
                 current_layer_z = np.dot(layer.weights, current_layer_activation) + layer.biases
                 layer_z.append(current_layer_z)
                 current_layer_activation = self._activation_fn(current_layer_z)
@@ -129,39 +160,65 @@ class NeuralNetwork(object):
                 # Transpose in preparation for the next time around...
                 current_layer_activation = current_layer_activation.T
 
+            log('activations {}'.format(layer_activation))
+
             # Forward propagation done, calc error
             # All the errors for all of the input feature sets...
-            error = layer_activation[-1] - labels
+            error = layer_activation[-1] - labels.T
 
             # This is fixed for the duration of the back prop.
             d_cost_d_activation = 2 * error
 
             # Backwards propagation...
-            this_layer_activation = features
             # Work your way forward through the layers so we don't change weights before we need them...
             for idx, layer in enumerate(self.layers):
 
-                # From the current layer to the output...
+                # Work backwards from the output layer through to the layer
+                # for which we are calculating the partial derivatives
                 chain = None
-                for inner_idx in range(idx, len(self.layers)):
+                for inner_idx in reversed(range(idx, len(self.layers))):
                     # Step 1
                     if chain is None:
-                        chain = this_layer_activation
+                        log('chain step 1: init chain: {}'.format(d_cost_d_activation))
+                        chain = d_cost_d_activation
                     else:
-                        chain = chain * self.layers[inner_idx].weights
+                        weights = self.layers[inner_idx].weights
+                        log(f'chain step 1: do chain {weights} x {chain}')
+                        chain = np.dot(weights, chain)
 
                     # Step 2
-                    chain = np.dot(chain, self._activation_der_fn(layer_activation[inner_idx]))
+                    d_activation_d_z = self._activation_der_fn(layer_z[inner_idx])
+                    log(f'chain step 2: idx={inner_idx}\n{chain} x {d_activation_d_z}')
+                    # Don't use dot product here. We want element-wise multiplication!
+                    chain = chain * d_activation_d_z
                     # d_activation_d_z = self._activation_der_fn(layer_activation[idx])
 
                 # d_z_d_w = this_layer_activation
                 # d_cost_d_w = chain *   d_cost_d_activation * d_activation_d_z * d_z_d_w
-                d_cost_d_w = np.dot(chain, d_cost_d_activation)
+                #d_cost_d_w = np.dot(chain, d_cost_d_activation)
 
-                print('d_cost_d_w', d_cost_d_w)
+                # If this is the first layer, it means the layer activation is the
+                # original input.
+                # Otherwise, look up the layer activation
+                this_layer_activation = features if idx == 0 else layer_activation[idx]
+
+                log(f'd_cost_d_w calc: {chain} x {this_layer_activation.T}')
+                d_cost_d_w = np.dot(chain, this_layer_activation.T)
+                # derivative of cost with respect to bias.
+                # No need to dot product with anything since the bias has no
+                # mutiplier in the form: z = (a * w) + b
+                d_cost_d_b = self._learning_rate * chain
+
+                log('d_cost_d_w {}'.format(d_cost_d_w))
+
+                weight_adjustments = self._learning_rate * d_cost_d_w
+
+                log('weight_adj {}'.format(weight_adjustments))
+                log('current weights {}'.format(layer.weights))
 
                 # Transpose the matrix so we can add the things together...
-                layer.weights -= self._learning_rate * d_cost_d_w.T
+                layer.weights -= weight_adjustments
+                layer.biases -= d_cost_d_b
 
                 # Prepare for the next stage of back propagation
                 this_layer_activation = layer_activation[idx]
