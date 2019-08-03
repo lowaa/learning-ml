@@ -9,9 +9,10 @@ def run_neural_network():
 
     nn = NeuralNetwork(learning_rate=0.05,
                        num_inputs=3,
-                       num_outputs=1)
+                       num_outputs=1,
+                       hidden_layer_sizes=[4])
 
-    nn.train(features=feature_set, labels=labels, epochs=10000)
+    nn.train(features=feature_set, labels=labels, epochs=2000)
     print(nn.evaluate(features=feature_set, labels=labels))
 
 

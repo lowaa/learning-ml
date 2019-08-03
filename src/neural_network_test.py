@@ -74,7 +74,7 @@ class NeuralNetworkTestCase(unittest.TestCase):
         assert_that(subject.layers[0].biases[0][0], close_to(0.99713379, DELTA))
         assert_that(subject.layers[0].biases[1][0], close_to(1.99371173708, DELTA))
 
-    def test_training_hidden_layer(self):
+    def test_training_hidden_layer_2_3_2(self):
         # Very simple single epoch training
 
         subject = NeuralNetwork(num_inputs=2, num_outputs=2, learning_rate=0.05,
@@ -87,6 +87,24 @@ class NeuralNetworkTestCase(unittest.TestCase):
 
         features = np.array([[0.8, 0.1]])
         labels = np.array([[0.6, 0.3]])
+
+        train_result: TrainResult = subject.train(features=features, labels=labels, epochs=1)
+
+        # TODO: hand-calc result for assertion
+
+    def test_training_hidden_layer_2_3_1(self):
+        # Very simple single epoch training
+
+        subject = NeuralNetwork(num_inputs=2, num_outputs=1, learning_rate=0.05,
+                                hidden_layer_sizes=[3])
+        # Force our weights to be a certain thing...
+        # subject.layers[0].weights = np.array([[0.25, 0.4], [0.25, 0.4], [0.25, 0.4]])
+        # subject.layers[0].biases = np.array([[1], [0.7], [0.6]])
+        # subject.layers[1].weights = np.array([[0.25, 0.4, 0.25], [0.4, 0.25, 0.4]])
+        # subject.layers[1].biases = np.array([[1], [0.7]])
+
+        features = np.array([[0.8, 0.1]])
+        labels = np.array([[0.6]])
 
         train_result: TrainResult = subject.train(features=features, labels=labels, epochs=1)
 

@@ -2,12 +2,12 @@ from typing import List, NamedTuple, Callable
 
 import numpy as np
 
-np.random.seed(123)
+np.random.seed(42)
 
 
 def log(msg):
-    pass
-    #print(msg)
+    #pass
+    print(msg)
 
 
 def calc_layer_z(weight: np.array,
@@ -220,8 +220,8 @@ class NeuralNetwork(object):
 
     def evaluate(self, features: np.array, labels: np.array):
         layer_activation, layer_z = self._forward_prop(features=features)
-        error = (layer_activation[-1] - labels.T) ** 2
-        return error
+        error = layer_activation[-1] - labels.T
+        return np.sum(error)
 
     def predict(self, features: np.array):
         layer_activation, _ = self._forward_prop(features=features)
