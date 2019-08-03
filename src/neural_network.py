@@ -152,7 +152,8 @@ class NeuralNetwork(object):
             current_layer_activation = features.T
             # Begin forward propagation...
             for idx, layer in enumerate(self.layers):
-                log('calc layer z (layer {}):\nw={}\na={}\nb={}'.format(idx, layer.weights, current_layer_activation, layer.biases))
+                log('calc layer z (layer {}):\nw={}\na={}\nb={}'.format(idx, layer.weights, current_layer_activation,
+                                                                        layer.biases))
                 current_layer_z = np.dot(layer.weights, current_layer_activation) + layer.biases
                 layer_z.append(current_layer_z)
                 current_layer_activation = self._activation_fn(current_layer_z)
@@ -195,11 +196,8 @@ class NeuralNetwork(object):
                     log(f'chain step 2: idx={inner_idx}\n{chain} x {d_activation_d_z}')
                     # Don't use dot product here. We want element-wise multiplication!
                     chain = chain * d_activation_d_z
-                    # d_activation_d_z = self._activation_der_fn(layer_activation[idx])
 
-                # d_z_d_w = this_layer_activation
-                # d_cost_d_w = chain *   d_cost_d_activation * d_activation_d_z * d_z_d_w
-                #d_cost_d_w = np.dot(chain, d_cost_d_activation)
+                log('End of chain function operations: {}'.format(chain))
 
                 # If this is the first layer, it means the layer activation is the
                 # original input.
@@ -208,10 +206,6 @@ class NeuralNetwork(object):
 
                 log(f'd_cost_d_w calc: {chain} x {previous_layer_activation.T}')
                 d_cost_d_w = np.dot(chain, previous_layer_activation.T)
-                # derivative of cost with respect to bias.
-                # No need to dot product with anything since the bias has no
-                # mutiplier in the form: z = (a * w) + b
-                d_cost_d_b = self._learning_rate * chain
 
                 log('d_cost_d_w {}'.format(d_cost_d_w))
 
@@ -222,10 +216,16 @@ class NeuralNetwork(object):
 
                 # Transpose the matrix so we can add the things together...
                 layer.weights -= weight_adjustments
-                layer.biases -= d_cost_d_b
 
-                # Prepare for the next stage of back propagation
-                previous_layer_activation = layer_activation[idx]
+                # derivative of cost with respect to bias.
+                # No need to dot product with anything since the bias has no
+                # mutiplier in the form: z = (a * w) + b
+                for partial_bias_result in chain.T:
+                    # This is pretty ugly and probably inefficient
+                    d_cost_d_b = self._learning_rate * np.atleast_2d(partial_bias_result).T
+                    log('d_cost_d_b {}'.format(d_cost_d_b))
+                    log('current biases {}'.format(layer.biases))
+                    layer.biases -= d_cost_d_b
 
         # Mainly for test assertion
         return TrainResult(

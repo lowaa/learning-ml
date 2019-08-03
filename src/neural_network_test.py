@@ -91,3 +91,48 @@ class NeuralNetworkTestCase(unittest.TestCase):
         train_result: TrainResult = subject.train(features=features, labels=labels, epochs=1)
 
         # TODO: hand-calc result for assertion
+
+    def test_training_single_layer_2_in_1_out_multiple_input_samples(self):
+        # Single epoch training
+
+        subject = NeuralNetwork(num_inputs=2, num_outputs=1, learning_rate=0.05)
+        # Force our weights to be a certain thing...
+        subject.layers[0].weights = np.array([[0.25, 0.4]])
+        subject.layers[0].biases = np.array([[1.0]])
+
+        features = np.array([[1, 0.1], [1, 0.1]])
+        labels = np.array([[0.6], [0.6]])
+
+        train_result: TrainResult = subject.train(features=features, labels=labels, epochs=1)
+
+        assert_that(train_result.error[0][0], close_to(0.18414719, DELTA))
+        assert_that(train_result.error[0][1], close_to(0.18414719, DELTA))
+
+        assert_that(subject.layers[0].weights[0][0], close_to(0.24376623551740695, DELTA))
+        assert_that(subject.layers[0].weights[0][1], close_to(0.3993766235517407, DELTA))
+
+        assert_that(subject.layers[0].biases[0][0], close_to(0.993766235517407, DELTA))
+
+    def test_training_single_layer_1_in_2_out_multiple_input_samples(self):
+        # Single epoch training
+
+        subject = NeuralNetwork(num_inputs=1, num_outputs=2, learning_rate=0.05)
+        # Force our weights to be a certain thing...
+        subject.layers[0].weights = np.array([[0.25], [0.4]])
+        subject.layers[0].biases = np.array([[1.0], [2.0]])
+
+        features = np.array([[0.5], [0.5]])
+        labels = np.array([[0.6, 0.2], [0.6, 0.2]])
+
+        train_result: TrainResult = subject.train(features=features, labels=labels, epochs=1)
+
+        assert_that(train_result.error[0][0], close_to(0.1549149, DELTA))
+        assert_that(train_result.error[0][1], close_to(0.1549149, DELTA))
+        assert_that(train_result.error[1][0], close_to(0.7002495, DELTA))
+        assert_that(train_result.error[1][1], close_to(0.7002495, DELTA))
+
+        assert_that(subject.layers[0].weights[0][0], close_to(0.247133790856, DELTA))
+        assert_that(subject.layers[0].weights[1][0], close_to(0.3937117371, DELTA))
+
+        assert_that(subject.layers[0].biases[0][0], close_to(0.994267581712, DELTA))
+        assert_that(subject.layers[0].biases[1][0], close_to(1.9874234742, DELTA))
